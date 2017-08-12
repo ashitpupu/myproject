@@ -1,7 +1,9 @@
 # myproject
+
 This repository contains my project on weather simulation. On start up of the project the system tries to analyze the data provided to it in trainingdata.csv and finds the min and max of various topogrphic values such as temp, pressure and humidity. Based on the min and max values of every month it predicts the topogrphic details of the same area. 
 
 Assumptions :-
+
 The system on initial start up it tries to learn from the csv file and stores the min max of temp, pressure and humidity. Based on these min and max it generates few new details. The details are generated based on the data provided it is not accurate. The application is confogured in such a way that user can provide month and year if the user wants, in case the user doesn't want to provide any details the system is enabled to take the current system date and base its calculation on that values. The list of location is obtained from the csv file only and the iteration can also be configured in the application properties file.
 
 Pre-requisite :-
