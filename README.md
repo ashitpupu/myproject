@@ -18,9 +18,9 @@ The system on initial start up it tries to learn from the csv file and stores th
 
 2- Run the runScript.bat file by double clicking. The script will do following :-
 
-  * It will run mvn clean
-  * It will run mvn package.
-  *  It will create a folder named Project_setup and will copy the 				weather_simulator-0.0.1-SNAPSHOT.jar jar file formed in target folder to Project_setup folder.
-  *  It will also copy the config folder into the Project_setup folder.
+  * run mvn clean
+  * run mvn package.
+  * Create a folder named Project_setup and will copy the 				weather_simulator-0.0.1-SNAPSHOT-jar-with-dependencies.jar jar file formed in target folder to Project_setup folder.
+  * Copy the config folder into the Project_setup folder.
   *   The user if wants to change the month, year and no of iteration, the user can configure it in application property file which is placed in config folder.
-  *    Once initial set up is completed, the project can run by clicking on the jar file or run the command java -jar weather_simulator-0.0.1-SNAPSHOT.jar in command prompt.
+  *    Once initial set up is completed, the project can run by clicking on the jar file or run the command java -jar weather_simulator-0.0.1-SNAPSHOT-jar-with-dependencies.jar in command prompt.
