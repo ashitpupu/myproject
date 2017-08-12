@@ -7,15 +7,18 @@ The system on initial start up it tries to learn from the csv file and stores th
 Pre-requisite :-
 
 1- You need to have jdk installed min is jdk1.7
+
 2- mvn should be installed and path configured to build the file.
 
 Usage :- 
 
 1- Once you have cloned/download the project into a folder.
+
 2- Run the runScript.bat file by double clicking. The script will do following :-
-	1- It will run mvn clean 
-	2- It will run mvn package.
-	3- It will create a folder named Project_setup and will copy the weather_simulator-0.0.1-SNAPSHOT.jar jar file formed in target folder to Project_setup folder.
-	4- It will also copy the config folder into the Project_setup folder.
-	5- The user if wants to change the month, year and no of iteration, the user can configure it in application property file which is placed in config folder.
-	6- Once initial set up is completed, the project can run by clicking on the jar file or run the command java -jar weather_simulator-0.0.1-SNAPSHOT.jar in command prompt.
+	
+    	1- It will run mvn clean 
+		2- It will run mvn package.
+		3- It will create a folder named Project_setup and will copy the 				weather_simulator-0.0.1-SNAPSHOT.jar jar file formed in target folder to Project_setup folder.
+		4- It will also copy the config folder into the Project_setup folder.
+		5- The user if wants to change the month, year and no of iteration, the user can configure it in application property file which is placed in config folder.
+		6- Once initial set up is completed, the project can run by clicking on the jar file or run the command java -jar weather_simulator-0.0.1-SNAPSHOT.jar in command prompt.
