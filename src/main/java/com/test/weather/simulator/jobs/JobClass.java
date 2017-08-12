@@ -21,23 +21,63 @@ public class JobClass {
 	DecimalFormat df = new DecimalFormat("###.##");
 	CommonUtility objUtil = new CommonUtility();
 
-	public void populateData(Map<String, LocationAttributes> locationMap, ArrayList<String> locationList) {
+	public void populateData(Map<String, LocationAttributes> locationMap, ArrayList<String> locationList,
+							Map<String, Object> propertyMap) {
 
-
-		populateDataFor(locationMap, locationList);
+		//String month = null;
+		populateDataFor(locationMap, locationList, propertyMap);
 
 	}
 
-	private void populateDataFor(Map<String, LocationAttributes> locationMap,ArrayList<String> locationList) {
+	private void populateDataFor(Map<String, LocationAttributes> locationMap,ArrayList<String> locationList,
+									Map<String, Object> propertyMap) {
 
 		LocationPrintAttr locaPrintAttr = new LocationPrintAttr();
 		ArrayList<String> locList = new ArrayList<String>(); 
-		int noOfIteration = 2;
+		int noOfIteration = 0;
+		int yearToCheck = 0;
+		String monthToCheck = null;
+		
+		if(propertyMap.containsKey("iteration")){
+			if((Integer)propertyMap.get("iteration") != 0){
+				noOfIteration = (Integer)propertyMap.get("iteration");
+			}
+			
+		}
+		
+		if(propertyMap.containsKey("month")){
+			if((String)propertyMap.get("month") != null){
+				monthToCheck = (String)propertyMap.get("month");
+			}
+		}
+		
+		if(monthToCheck == null){
+			monthToCheck =  objUtil.getCurrentMonth();
+		}
+		
+		if(propertyMap.containsKey("year")){
+			if((Integer)propertyMap.get("year") != 0){
+				yearToCheck = (Integer)propertyMap.get("year");
+			}
+		}
+		
+		if( yearToCheck == 0){
+			yearToCheck = objUtil.getCurrentYear();
+		}
+		
+		/*if(propertyMap != null){
+			
+			//monthToCheck = propertyMap.;
+		}else {
+			System.out.println("The current month in first case " + objUtil.getCurrentMonth());
+			monthToCheck = objUtil.getCurrentMonth();
+		}*/
+		
 
-		for(int i=0; i<noOfIteration ; i++) {
+		for(int i=0; i < noOfIteration ; i++) {
 
 			Iterator<String> locItr = locationList.iterator();
-			String monthToCheck = objUtil.getCurrentMonth();
+			//String monthToCheck = objUtil.getCurrentMonth() ;
 
 			while(locItr.hasNext()){
 
@@ -48,7 +88,7 @@ public class JobClass {
 				locaPrintAttr.setLattitude(Float.valueOf(df.format(locAttr.getLattitude())));
 				locaPrintAttr.setLongitude(Float.valueOf(df.format(locAttr.getLongitude())));
 				locaPrintAttr.setElevation(Float.valueOf(df.format(locAttr.getElev())));
-				locaPrintAttr.setDateTime(objUtil.getDateTime(location));
+				locaPrintAttr.setDateTime(objUtil.getDateTime(monthToCheck, yearToCheck));
 
 				locaPrintAttr.setPressure(getPressure(monthlyClimateObj));
 				locaPrintAttr.setHumidity(Math.round(getHumidity(monthlyClimateObj)*100));
@@ -103,7 +143,7 @@ public class JobClass {
 	private String getWeatherCondition(float temp, float humidity) {
 
 		String weatherCond = null;
-		if((temp < 10 && humidity > 45)|| temp <= -10){
+		if((temp < 10 && humidity > 45)|| temp <= -5){
 			weatherCond = "Snow";
 		}else if(temp >= 10 && humidity > 80){
 			weatherCond = "Rain";

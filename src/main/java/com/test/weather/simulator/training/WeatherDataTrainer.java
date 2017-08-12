@@ -22,6 +22,7 @@ public class WeatherDataTrainer {
 	static CommonUtility utilObj = new CommonUtility();
 	static ArrayList<String> locationList = new ArrayList<String>();
 	static JobClass job = new JobClass();
+	Map<String, Object> propertyMap = new HashMap<String, Object>();
 
 	public void trainWithData() {
 
@@ -48,7 +49,8 @@ public class WeatherDataTrainer {
 				
 				locationList.add(entry.getKey());
 			}
-			job.populateData(locationMap, locationList);
+			propertyMap = utilObj.getYearAndMonth();
+			job.populateData(locationMap, locationList, propertyMap);
 			
 		} catch (IOException e) {
 
