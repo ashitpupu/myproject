@@ -9,6 +9,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+
+
+
+import org.apache.log4j.Logger;
+
 import com.test.weather.simulator.beans.LocationAttributes;
 import com.test.weather.simulator.beans.MonthlyClimateVariation;
 import com.test.weather.simulator.jobs.JobClass;
@@ -17,6 +22,8 @@ import com.test.weather.simulator.utility.CommonUtility;
 
 public class WeatherDataTrainer {
 
+	final static Logger logger = Logger.getLogger(WeatherDataTrainer.class);
+
 	static Map<String, LocationAttributes> locationMap = new HashMap<String, LocationAttributes>();
 	static Map<String, MonthlyClimateVariation> locClimMap = new HashMap<String, MonthlyClimateVariation>();
 	static CommonUtility utilObj = new CommonUtility();
@@ -24,6 +31,11 @@ public class WeatherDataTrainer {
 	static JobClass job = new JobClass();
 	Map<String, Object> propertyMap = new HashMap<String, Object>();
 
+	/*******************************************************
+	 * Training the system with the provided data to 
+	 * analyse min and max topographic conditions
+	 * 
+	 ******************************************************/
 	public void trainWithData() {
 
 		BufferedReader br = null;
@@ -32,6 +44,7 @@ public class WeatherDataTrainer {
 		try {
 
 			String path = new File("config").getCanonicalPath();
+			logger.info("Config path is " + path);
 			path = path + "/trainingdata.csv";
 			fr = new FileReader(path);
 			br = new BufferedReader(fr);
@@ -46,15 +59,16 @@ public class WeatherDataTrainer {
 
 			for (Entry<String, LocationAttributes> entry : locationMap.entrySet())
 			{
-				
+
 				locationList.add(entry.getKey());
 			}
 			propertyMap = utilObj.getYearAndMonth();
 			job.populateData(locationMap, locationList, propertyMap);
-			
-		} catch (IOException e) {
 
-			e.printStackTrace();
+		} catch (Exception e) {
+
+
+			logger.error("Error reading the file provided " + e);
 
 		} finally {
 
@@ -68,7 +82,7 @@ public class WeatherDataTrainer {
 
 			} catch (IOException ex) {
 
-				ex.printStackTrace();
+				logger.error("Unable to close the bufferreader " + ex);
 
 			}
 
@@ -76,6 +90,12 @@ public class WeatherDataTrainer {
 
 	}
 
+	/***************************************************************
+	 * This method splits each line and populates data in min and max
+	 * @param sCurrentLine
+	 * @return
+	 ***************************************************************/
+	@SuppressWarnings("finally")
 	private Map<String, LocationAttributes> populateDetails(String sCurrentLine) {
 
 
@@ -85,100 +105,130 @@ public class WeatherDataTrainer {
 
 
 		String[] lineSplit = sCurrentLine.split(",");
-				
-		if(locationMap.isEmpty()){
 
-			String location  = lineSplit[6];
-			locAttr.setLocation(location);
-			locAttr.setElev(Float.parseFloat(lineSplit[2]));
-			locAttr.setLattitude(Float.parseFloat(lineSplit[4]));
-			locAttr.setLongitude(Float.parseFloat(lineSplit[5]));
-			String month = utilObj.getMonth(Long.parseLong(lineSplit[9]));
-			monClimVar.setMonth(month);
-			monClimVar.setMinMonthlyTemp(Float.parseFloat(lineSplit[8]));
-			monClimVar.setMaxMonthlyTemp(Float.parseFloat(lineSplit[8]));
-			monClimVar.setMinMonthlyHumidity(Float.parseFloat(lineSplit[3]));
-			monClimVar.setMaxMonthlyhumidity(Float.parseFloat(lineSplit[3]));
-			monClimVar.setMinMonthlyPressure(Float.parseFloat(lineSplit[7]));
-			monClimVar.setMaxMonthlyPressure(Float.parseFloat(lineSplit[7]));
-			monClimVar.setStartEpochTime(Long.parseLong(lineSplit[9]));
-			monClimVar.setEndEpochTime(Long.parseLong(lineSplit[9]));
-			locClimMap.put(month, monClimVar);
-			locAttr.setLocClimMap(locClimMap);
-			locationMap.put(location, locAttr);
+		try{
 
-		}else {
-			evaluateAndAdd(lineSplit, locationMap);
+			if(locationMap.isEmpty()){
+
+				String location  = lineSplit[6];
+				locAttr.setLocation(location);
+				logger.info("Populating attributes for location " + location);
+				locAttr.setElev(Float.parseFloat(lineSplit[2]));
+				locAttr.setLattitude(Float.parseFloat(lineSplit[4]));
+				locAttr.setLongitude(Float.parseFloat(lineSplit[5]));
+				String month = utilObj.getMonth(Long.parseLong(lineSplit[9]));
+				monClimVar.setMonth(month);
+				monClimVar.setMinMonthlyTemp(Float.parseFloat(lineSplit[8]));
+				monClimVar.setMaxMonthlyTemp(Float.parseFloat(lineSplit[8]));
+				monClimVar.setMinMonthlyHumidity(Float.parseFloat(lineSplit[3]));
+				monClimVar.setMaxMonthlyhumidity(Float.parseFloat(lineSplit[3]));
+				monClimVar.setMinMonthlyPressure(Float.parseFloat(lineSplit[7]));
+				monClimVar.setMaxMonthlyPressure(Float.parseFloat(lineSplit[7]));
+				monClimVar.setStartEpochTime(Long.parseLong(lineSplit[9]));
+				monClimVar.setEndEpochTime(Long.parseLong(lineSplit[9]));
+				locClimMap.put(month, monClimVar);
+				locAttr.setLocClimMap(locClimMap);
+				locationMap.put(location, locAttr);
+
+			}else {
+				evaluateAndAdd(lineSplit, locationMap);
+			}
+
+		}catch(Exception e){
+			logger.error("Error caught while populating data " + e);
+		} finally {
+			return locationMap;
 		}
-
-		return locationMap;
 
 	}
 
-	private Map<String, LocationAttributes> evaluateAndAdd(String[] lineSplit, Map<String, LocationAttributes> locationMap2) {
+	/************************************************************************
+	 * In case of a location value added earlier this method is called and it compares
+	 * the given data with previously populated min and max value are smaller .
+	 * If the condition fails then max or min value is changed accordingly
+	 * @param lineSplit
+	 * @param locationMap2
+	 * @return
+	 * @throws Exception
+	 *********************************************************************/
+	private Map<String, LocationAttributes> evaluateAndAdd(String[] lineSplit, 
+			Map<String, LocationAttributes> locationMap2) throws Exception {
 
 		String identifiedLoc = lineSplit[6].toString();
-		
+
 		LocationAttributes locAttr = new LocationAttributes();
 		MonthlyClimateVariation monClimVar = new MonthlyClimateVariation();
-		boolean flag = false;
-		
-		for ( String locKey : locationMap.keySet() ) {
+		boolean locationPresent = false;
 
-			if(locKey.equalsIgnoreCase(identifiedLoc)){
-				flag = true;
+		try{
+
+			for ( String locKey : locationMap.keySet() ) {
+
+				if(locKey.equalsIgnoreCase(identifiedLoc)){
+					locationPresent = true;
+				}
 			}
+
+			if(locationPresent){
+
+				locAttr = checkAttributes(lineSplit, identifiedLoc, locationMap);
+
+			}else {
+
+				locAttr = new LocationAttributes();
+				locClimMap = new HashMap<String, MonthlyClimateVariation>();
+				locAttr.setLocation(identifiedLoc);
+				logger.info("Populating attributes for location " + identifiedLoc);
+				locAttr.setElev(Float.parseFloat(lineSplit[2]));
+				locAttr.setLattitude(Float.parseFloat(lineSplit[4]));
+				locAttr.setLongitude(Float.parseFloat(lineSplit[5]));
+				String month = utilObj.getMonth(Long.parseLong(lineSplit[9]));
+				monClimVar.setMonth(month);
+				monClimVar.setMinMonthlyTemp(Float.parseFloat(lineSplit[8]));
+				monClimVar.setMaxMonthlyTemp(Float.parseFloat(lineSplit[8]));
+				monClimVar.setMinMonthlyHumidity(Float.parseFloat(lineSplit[3]));
+				monClimVar.setMaxMonthlyhumidity(Float.parseFloat(lineSplit[3]));
+				monClimVar.setMinMonthlyPressure(Float.parseFloat(lineSplit[7]));
+				monClimVar.setMaxMonthlyPressure(Float.parseFloat(lineSplit[7]));
+				monClimVar.setStartEpochTime(Long.parseLong(lineSplit[9]));
+				monClimVar.setEndEpochTime(Long.parseLong(lineSplit[9]));
+				locClimMap.put(month, monClimVar);
+				locAttr.setLocClimMap(locClimMap);
+				locationMap.put(identifiedLoc, locAttr);
+
+			}
+
+			return locationMap;
+
+		}catch(Exception ex){
+			throw new Exception("Could not generate value : ",ex);
 		}
-
-		if(flag){
-
-			locAttr = checkAttributes(lineSplit, identifiedLoc, locationMap);
-
-		}else {
-
-			locAttr = new LocationAttributes();
-			locClimMap = new HashMap<String, MonthlyClimateVariation>();
-			locAttr.setLocation(identifiedLoc);
-			locAttr.setElev(Float.parseFloat(lineSplit[2]));
-			locAttr.setLattitude(Float.parseFloat(lineSplit[4]));
-			locAttr.setLongitude(Float.parseFloat(lineSplit[5]));
-			String month = utilObj.getMonth(Long.parseLong(lineSplit[9]));
-			monClimVar.setMonth(month);
-			monClimVar.setMinMonthlyTemp(Float.parseFloat(lineSplit[8]));
-			monClimVar.setMaxMonthlyTemp(Float.parseFloat(lineSplit[8]));
-			monClimVar.setMinMonthlyHumidity(Float.parseFloat(lineSplit[3]));
-			monClimVar.setMaxMonthlyhumidity(Float.parseFloat(lineSplit[3]));
-			monClimVar.setMinMonthlyPressure(Float.parseFloat(lineSplit[7]));
-			monClimVar.setMaxMonthlyPressure(Float.parseFloat(lineSplit[7]));
-			monClimVar.setStartEpochTime(Long.parseLong(lineSplit[9]));
-			monClimVar.setEndEpochTime(Long.parseLong(lineSplit[9]));
-			locClimMap.put(month, monClimVar);
-			locAttr.setLocClimMap(locClimMap);
-			locationMap.put(identifiedLoc, locAttr);
-
-		}
-
-		return locationMap;
 
 	}
 
-	private static LocationAttributes checkAttributes(String[] lineSplit, String identifiedLoc, Map<String, LocationAttributes> locationMap) {
+	private static LocationAttributes checkAttributes(String[] lineSplit, String identifiedLoc, 
+			Map<String, LocationAttributes> locationMap) throws Exception {
 
-		
+
 		LocationAttributes locAttr = locationMap.get(identifiedLoc);
-		
-		
-		locAttr = checkHumidityAttribute(locAttr, lineSplit);
-		locAttr = checkpressureAttribute(locAttr, lineSplit);
-		locAttr = checkTempAttribute(locAttr, lineSplit);
-		locAttr = checkEpochTimeAttribute(locAttr, lineSplit);
-		
+
+		try{
+
+			locAttr = checkHumidityAttribute(locAttr, lineSplit);
+			locAttr = checkpressureAttribute(locAttr, lineSplit);
+			locAttr = checkTempAttribute(locAttr, lineSplit);
+			locAttr = checkEpochTimeAttribute(locAttr, lineSplit);
+
+		}catch(Exception ex){
+			throw new Exception("Could not generate value : ",ex);
+		}
+
 
 		return locationMap.put(identifiedLoc, locAttr);
 
 	}
 
-	private static LocationAttributes checkEpochTimeAttribute(LocationAttributes locAttr,  String[] lineSplit) {
+	private static LocationAttributes checkEpochTimeAttribute(LocationAttributes locAttr,  String[] lineSplit) throws Exception{
 
 		MonthlyClimateVariation monClimVar = new MonthlyClimateVariation();
 
@@ -187,30 +237,38 @@ public class WeatherDataTrainer {
 		long epochTimeValue = Long.parseLong(lineSplit[9]);
 
 		String month = utilObj.getMonth(epochTimeValue);
-		if(locAttr.getLocClimMap().containsKey(month)) {
 
-			monClimVar = locAttr.getLocClimMap().get(month);
-			setStartTime = monClimVar.getStartEpochTime();
-			setEndTime = monClimVar.getEndEpochTime();
+		try {
 
-			if(epochTimeValue < setStartTime){
-				monClimVar.setStartEpochTime(epochTimeValue);
+			if(locAttr.getLocClimMap().containsKey(month)) {
+
+				monClimVar = locAttr.getLocClimMap().get(month);
+				setStartTime = monClimVar.getStartEpochTime();
+				setEndTime = monClimVar.getEndEpochTime();
+
+				if(epochTimeValue < setStartTime){
+					monClimVar.setStartEpochTime(epochTimeValue);
+				}
+
+				if(epochTimeValue > setEndTime){
+					monClimVar.setEndEpochTime(epochTimeValue);
+				}
+
+			}else {
+
+				locAttr = populateDefault(month, lineSplit);
 			}
 
-			if(epochTimeValue > setEndTime){
-				monClimVar.setEndEpochTime(epochTimeValue);
-			}
-
-		}else {
-
-			locAttr = populateDefault(month, lineSplit);
+		}catch(Exception ex){
+			throw new Exception("Could not generate date time value : ",ex);
 		}
+
 
 		return locAttr;
 
 	}
 
-	private static LocationAttributes checkTempAttribute(LocationAttributes locAttr,  String[] lineSplit) {
+	private static LocationAttributes checkTempAttribute(LocationAttributes locAttr,  String[] lineSplit) throws Exception {
 
 		MonthlyClimateVariation monClimVar = new MonthlyClimateVariation();
 
@@ -220,30 +278,37 @@ public class WeatherDataTrainer {
 		float tempValue =  Float.parseFloat(lineSplit[8]);
 
 		String month = utilObj.getMonth(epochTimeValue);
-		if(locAttr.getLocClimMap().containsKey(month)) {
+		try{
 
-			monClimVar = locAttr.getLocClimMap().get(month);
-			setMinTempValue = monClimVar.getMinMonthlyTemp();
-			setMaxTempValue = monClimVar.getMaxMonthlyTemp();
+			if(locAttr.getLocClimMap().containsKey(month)) {
 
-			if(tempValue < setMinTempValue){
-				monClimVar.setMinMonthlyTemp(tempValue);
+				monClimVar = locAttr.getLocClimMap().get(month);
+				setMinTempValue = monClimVar.getMinMonthlyTemp();
+				setMaxTempValue = monClimVar.getMaxMonthlyTemp();
+
+				if(tempValue < setMinTempValue){
+					monClimVar.setMinMonthlyTemp(tempValue);
+				}
+
+				if(tempValue > setMaxTempValue){
+					monClimVar.setMaxMonthlyTemp(tempValue);
+				}
+
+			}else {
+
+				locAttr = populateDefault(month, lineSplit);
 			}
 
-			if(tempValue > setMaxTempValue){
-				monClimVar.setMaxMonthlyTemp(tempValue);
-			}
-
-		}else {
-
-			locAttr = populateDefault(month, lineSplit);
+		}catch(Exception ex){
+			throw new Exception("Could not generate temperature value : ",ex);
 		}
+
 
 		return locAttr;
 
 	}
 
-	private static LocationAttributes checkpressureAttribute(LocationAttributes locAttr,  String[] lineSplit) {
+	private static LocationAttributes checkpressureAttribute(LocationAttributes locAttr,  String[] lineSplit) throws Exception {
 
 		MonthlyClimateVariation monClimVar = new MonthlyClimateVariation();
 
@@ -253,30 +318,37 @@ public class WeatherDataTrainer {
 		float pressureValue = Float.parseFloat(lineSplit[7]) ;
 
 		String month = utilObj.getMonth(epochTimeValue);
-		if(locAttr.getLocClimMap().containsKey(month)) {
+		try{
+			
+			if(locAttr.getLocClimMap().containsKey(month)) {
 
-			monClimVar = locAttr.getLocClimMap().get(month);
-			setMinPressureValue = monClimVar.getMinMonthlyPressure();
-			setMaxPressureValue = monClimVar.getMaxMonthlyPressure();
+				monClimVar = locAttr.getLocClimMap().get(month);
+				setMinPressureValue = monClimVar.getMinMonthlyPressure();
+				setMaxPressureValue = monClimVar.getMaxMonthlyPressure();
 
-			if(pressureValue < setMinPressureValue){
-				monClimVar.setMinMonthlyPressure(pressureValue);
+				if(pressureValue < setMinPressureValue){
+					monClimVar.setMinMonthlyPressure(pressureValue);
+				}
+
+				if(pressureValue > setMaxPressureValue){
+					monClimVar.setMaxMonthlyPressure(pressureValue);
+				}
+
+			}else {
+
+				locAttr = populateDefault(month, lineSplit);
 			}
-
-			if(pressureValue > setMaxPressureValue){
-				monClimVar.setMaxMonthlyPressure(pressureValue);
-			}
-
-		}else {
-
-			locAttr = populateDefault(month, lineSplit);
+			
+		}catch(Exception ex){
+			throw new Exception("Could not generate pressure value : ",ex);
 		}
+		
 
 		return locAttr;
 
 	}
 
-	private static LocationAttributes checkHumidityAttribute(LocationAttributes locAttr, String[] lineSplit) {
+	private static LocationAttributes checkHumidityAttribute(LocationAttributes locAttr, String[] lineSplit) throws Exception {
 
 		MonthlyClimateVariation monClimVar = new MonthlyClimateVariation();
 
@@ -284,26 +356,31 @@ public class WeatherDataTrainer {
 		float setMaxHumidityValue = 0.0f;
 		float humidityValue = Float.parseFloat(lineSplit[3]);
 		long epochTimeValue = Long.parseLong(lineSplit[9]);
-		
+
 		String month = utilObj.getMonth(epochTimeValue);
-		if(locAttr.getLocClimMap().containsKey(month)) {
+		try{
+			
+			if(locAttr.getLocClimMap().containsKey(month)) {
 
-			monClimVar = locAttr.getLocClimMap().get(month);
-			setMinHumidityValue = monClimVar.getMinMonthlyHumidity();
-			setMaxHumidityValue = monClimVar.getMaxMonthlyHumidity();
+				monClimVar = locAttr.getLocClimMap().get(month);
+				setMinHumidityValue = monClimVar.getMinMonthlyHumidity();
+				setMaxHumidityValue = monClimVar.getMaxMonthlyHumidity();
 
-			if(humidityValue < setMinHumidityValue){
-				monClimVar.setMinMonthlyHumidity(humidityValue);
+				if(humidityValue < setMinHumidityValue){
+					monClimVar.setMinMonthlyHumidity(humidityValue);
+				}
+
+				if(humidityValue > setMaxHumidityValue){
+					monClimVar.setMaxMonthlyhumidity(humidityValue);
+				}
+
+			}else {
+
+				locAttr = populateDefault(month, lineSplit);
+
 			}
-
-			if(humidityValue > setMaxHumidityValue){
-				monClimVar.setMaxMonthlyhumidity(humidityValue);
-			}
-
-		}else {
-
-			locAttr = populateDefault(month, lineSplit);
-
+		}catch(Exception ex){
+			throw new Exception("Could not generate humidity value : ",ex);
 		}
 
 		return locAttr;

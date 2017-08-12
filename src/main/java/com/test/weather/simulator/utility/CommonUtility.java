@@ -14,14 +14,19 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
+import org.apache.log4j.Logger;
+
+
 public class CommonUtility {
 
+
+	final static Logger logger = Logger.getLogger(CommonUtility.class);
 	Random rand = new Random();
-	
-	
+
+
 	public String getMonth(long epochTimeVal){
 
-		
+
 		long val = epochTimeVal * 1000;
 		Date date = new Date(val);
 		DateFormat format = new SimpleDateFormat("MM");
@@ -54,7 +59,7 @@ public class CommonUtility {
 		case 12: monthString = "December";
 		break; 
 		}
-		
+
 		return monthString;
 
 	}
@@ -67,7 +72,7 @@ public class CommonUtility {
 		try {
 
 			String path = new File("config").getCanonicalPath();
-			System.out.println(path);
+			//System.out.println(path);
 			path = path + "/application.properties";
 
 			prop.load(new FileInputStream(path));
@@ -75,13 +80,13 @@ public class CommonUtility {
 			number_of_location = Integer.parseInt(prop.getProperty("NUMBER_OF_LOCATION_TO_POPULATE"));
 
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			logger.error("Error in reading the file " + ex);
 		} finally{
 			if(input!=null){
 				try {
 					input.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Unable to close the input stream " + e);
 				}
 			}
 		}
@@ -92,40 +97,46 @@ public class CommonUtility {
 
 	public float getRandomFloat(float maxFloatValue, float minFloatValue) throws Exception{
 		try{
-			
+
 			return  rand.nextFloat() * (maxFloatValue - minFloatValue) + minFloatValue;
-			
+
 		}catch(Exception ex){
 			throw new Exception("Could not generate value : ",ex);	
 		}
-		
+
 	}
 
-	public String getDateTime(String monthToCheck, int yearToCheck) {
-		
-		if(monthToCheck.equalsIgnoreCase(getCurrentMonth())){
-			
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-			//sdf.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
-			Date date = new Date();
-			return sdf.format(date);
-			
-		}else {
-			int month_no = getMonthInInt(monthToCheck);
-			GregorianCalendar gc = new GregorianCalendar(yearToCheck, month_no-1, 1);
-			java.util.Date monthEndDate = new java.util.Date(gc.getTime().getTime());
-			System.out.println(monthEndDate);
-			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-			return format.format(monthEndDate);
+	public String getDateTime(String monthToCheck, int yearToCheck) throws Exception {
+
+		try{
+
+			if(monthToCheck.equalsIgnoreCase(getCurrentMonth())){
+
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+				//sdf.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
+				Date date = new Date();
+				return sdf.format(date);
+
+			}else {
+				int month_no = getMonthInInt(monthToCheck);
+				GregorianCalendar gc = new GregorianCalendar(yearToCheck, month_no-1, 1);
+				java.util.Date monthEndDate = new java.util.Date(gc.getTime().getTime());
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+				return format.format(monthEndDate);
+			}
+
+		}catch(Exception ex){
+			throw new Exception("Could not generate date time  : ",ex);
 		}
+
 		//System.out.println(getCurrentMonth());
-		
+
 	}
 
 	private int getMonthInInt(String monthToCheck) {
-		
+
 		int month_in_int= 0;
-		
+
 		if(monthToCheck.equalsIgnoreCase("January")){
 			month_in_int = 1;
 		}else if(monthToCheck.equalsIgnoreCase("February")){
@@ -151,12 +162,12 @@ public class CommonUtility {
 		}else if(monthToCheck.equalsIgnoreCase("December")){
 			month_in_int = 12;
 		}
-		
+
 		return month_in_int;
 	}
 
-	public String getCurrentMonth() {
-		
+	public String getCurrentMonth() throws Exception{
+
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		Long millis = 0L;
 		//sdf.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
@@ -165,76 +176,85 @@ public class CommonUtility {
 			millis = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(sdf.format(date)).getTime();
 			//System.out.println(millis);
 		} catch (ParseException e) {
-			
-			e.printStackTrace();
+
+			throw new Exception("Could not current month  : ",e);
+
 		}
-		
+
 		return getMonth(millis/1000);
 	}
 
 	public float convertFahToCenti(float temp){
-		
+
 		float tempInCenti = 0.0f;
 		tempInCenti = ((temp - 32)*5)/9;
 		return tempInCenti;
-		
+
 	}
 
 	public Map<String, Object> getYearAndMonth() {
-		
+
 		Map<String, Object> monthMap = new HashMap<String, Object>();
 		Properties prop = new Properties();
-    	InputStream input = null;
-    	int number_of_iteration = 0;
-    	String month_to_be_observed = null;
-    	int year_to_be_observed = 0000;
-    	try {
+		InputStream input = null;
+		int number_of_iteration = 0;
+		String month_to_be_observed = null;
+		int year_to_be_observed = 0000;
+		try {
 
-    		String path = new File("config").getCanonicalPath();
-    		System.out.println(path);
-    		path = path + "/application.properties";
-    		
-    		prop.load(new FileInputStream(path));
-    		    		
-    		number_of_iteration = Integer.parseInt(prop.getProperty("NO_OF_ITERATION"));
-    		if(!prop.getProperty("MONTH_TO_BE_OBSERVED").isEmpty()){
-    			month_to_be_observed = prop.getProperty("MONTH_TO_BE_OBSERVED");
-    		}
-    		
-    		if(!prop.getProperty("YEAR_TO_BE_OBSERVED").isEmpty()){
-    			year_to_be_observed = Integer.parseInt(prop.getProperty("YEAR_TO_BE_OBSERVED"));
-    		}
-    		
-    		
-    		
-    		monthMap.put("iteration", number_of_iteration);
-    		monthMap.put("month", month_to_be_observed);
-    		monthMap.put("year", year_to_be_observed);
+			String path = new File("config").getCanonicalPath();
+			System.out.println(path);
+			path = path + "/application.properties";
 
-    	} catch (IOException ex) {
-    		ex.printStackTrace();
-        } finally{
-        	if(input!=null){
-        		try {
-				input.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+			prop.load(new FileInputStream(path));
+
+			if(!prop.getProperty("NO_OF_ITERATION").isEmpty()){
+				number_of_iteration = Integer.parseInt(prop.getProperty("NO_OF_ITERATION"));
 			}
-        	}
-        	
-        }
-		
+
+			if(!prop.getProperty("MONTH_TO_BE_OBSERVED").isEmpty()){
+				month_to_be_observed = prop.getProperty("MONTH_TO_BE_OBSERVED");
+			}
+
+			if(!prop.getProperty("YEAR_TO_BE_OBSERVED").isEmpty()){
+				year_to_be_observed = Integer.parseInt(prop.getProperty("YEAR_TO_BE_OBSERVED"));
+			}
+
+			logger.info("number of iteration to be done is :- " +  number_of_iteration);
+			logger.info("month to be observed is  :- " +  month_to_be_observed);
+			logger.info("year to be observed :- " +  year_to_be_observed);
+
+			monthMap.put("iteration", number_of_iteration);
+			monthMap.put("month", month_to_be_observed);
+			monthMap.put("year", year_to_be_observed);
+
+		} catch (IOException ex) {
+
+			logger.error("Error reading the property file " + ex);
+
+		} finally{
+			if(input!=null){
+				try {
+					input.close();
+				} catch (IOException e) {
+
+					logger.error("Error closing the input stream " + e);
+				}
+			}
+
+		}
+
 		return monthMap;
-		
-		
+
+
 	}
 
 	public int getCurrentYear() {
-		
+
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
 		//int year = 0;
 		Date date = new Date();
 		return Integer.parseInt(sdf.format(date));
-		
+
 	}
 }
