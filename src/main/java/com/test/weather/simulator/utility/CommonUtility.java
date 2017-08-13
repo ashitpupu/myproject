@@ -24,40 +24,48 @@ public class CommonUtility {
 	Random rand = new Random();
 
 
-	public String getMonth(long epochTimeVal){
-
+	public String getMonth(long epochTimeVal) throws Exception{
 
 		long val = epochTimeVal * 1000;
 		Date date = new Date(val);
 		DateFormat format = new SimpleDateFormat("MM");
 		String formatted = format.format(date);
 		String monthString = null;
+		
+		try {
+			
+			switch(Integer.parseInt(formatted)){
+			case 1:  monthString = "January";
+			break;
+			case 2:  monthString = "February";
+			break;
+			case 3:  monthString = "March";
+			break;
+			case 4:  monthString = "April";
+			break;
+			case 5:  monthString = "May";
+			break;
+			case 6:  monthString = "June";
+			break;
+			case 7:  monthString = "July";
+			break;
+			case 8:  monthString = "August";
+			break;
+			case 9:  monthString = "September";
+			break;
+			case 10: monthString = "October";
+			break;
+			case 11: monthString = "November";
+			break;
+			case 12: monthString = "December";
+			break;
 
-		switch(Integer.parseInt(formatted)){
-		case 1:  monthString = "January";
-		break;
-		case 2:  monthString = "February";
-		break;
-		case 3:  monthString = "March";
-		break;
-		case 4:  monthString = "April";
-		break;
-		case 5:  monthString = "May";
-		break;
-		case 6:  monthString = "June";
-		break;
-		case 7:  monthString = "July";
-		break;
-		case 8:  monthString = "August";
-		break;
-		case 9:  monthString = "September";
-		break;
-		case 10: monthString = "October";
-		break;
-		case 11: monthString = "November";
-		break;
-		case 12: monthString = "December";
-		break; 
+			default:
+				getCurrentMonth();
+			}
+
+		}catch(Exception e){
+			throw new Exception("Could not generate the month string : ",e);	
 		}
 
 		return monthString;
@@ -133,35 +141,46 @@ public class CommonUtility {
 
 	}
 
-	private int getMonthInInt(String monthToCheck) {
+	private int getMonthInInt(String monthToCheck) throws Exception {
 
 		int month_in_int= 0;
-
-		if(monthToCheck.equalsIgnoreCase("January")){
-			month_in_int = 1;
-		}else if(monthToCheck.equalsIgnoreCase("February")){
-			month_in_int = 2;
-		}else if(monthToCheck.equalsIgnoreCase("March")){
-			month_in_int = 3;
-		}else if(monthToCheck.equalsIgnoreCase("April")){
-			month_in_int = 4;
-		}else if(monthToCheck.equalsIgnoreCase("May")){
-			month_in_int = 5;
-		}else if(monthToCheck.equalsIgnoreCase("June")){
-			month_in_int = 6;
-		}else if(monthToCheck.equalsIgnoreCase("July")){
-			month_in_int = 7;
-		}else if(monthToCheck.equalsIgnoreCase("August")){
-			month_in_int = 8;
-		}else if(monthToCheck.equalsIgnoreCase("September")){
-			month_in_int = 9;
-		}else if(monthToCheck.equalsIgnoreCase("October")){
-			month_in_int = 10;
-		}else if(monthToCheck.equalsIgnoreCase("November")){
-			month_in_int = 11;
-		}else if(monthToCheck.equalsIgnoreCase("December")){
-			month_in_int = 12;
+		
+		try {
+			
+			if(monthToCheck.equalsIgnoreCase("January")){
+				month_in_int = 1;
+			}else if(monthToCheck.equalsIgnoreCase("February")){
+				month_in_int = 2;
+			}else if(monthToCheck.equalsIgnoreCase("March")){
+				month_in_int = 3;
+			}else if(monthToCheck.equalsIgnoreCase("April")){
+				month_in_int = 4;
+			}else if(monthToCheck.equalsIgnoreCase("May")){
+				month_in_int = 5;
+			}else if(monthToCheck.equalsIgnoreCase("June")){
+				month_in_int = 6;
+			}else if(monthToCheck.equalsIgnoreCase("July")){
+				month_in_int = 7;
+			}else if(monthToCheck.equalsIgnoreCase("August")){
+				month_in_int = 8;
+			}else if(monthToCheck.equalsIgnoreCase("September")){
+				month_in_int = 9;
+			}else if(monthToCheck.equalsIgnoreCase("October")){
+				month_in_int = 10;
+			}else if(monthToCheck.equalsIgnoreCase("November")){
+				month_in_int = 11;
+			}else if(monthToCheck.equalsIgnoreCase("December")){
+				month_in_int = 12;
+			}else {
+				month_in_int = getMonthInInt(getCurrentMonth());
+			}
+			
+		}catch(Exception e){
+			throw new Exception("Could not generate the month string : ",e);	
 		}
+		
+
+		
 
 		return month_in_int;
 	}

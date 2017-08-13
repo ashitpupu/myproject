@@ -152,7 +152,7 @@ public class WeatherDataTrainer {
 	 * @throws Exception
 	 *********************************************************************/
 	private Map<String, LocationAttributes> evaluateAndAdd(String[] lineSplit, 
-			Map<String, LocationAttributes> locationMap2) throws Exception {
+			Map<String, LocationAttributes> locationMap) throws Exception {
 
 		String identifiedLoc = lineSplit[6].toString();
 

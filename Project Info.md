@@ -25,3 +25,4 @@ The system on initial start up it tries to learn from the csv file and stores th
   *   The user if wants to change the month, year and no of iteration, the user can configure it in application property file which is placed in config folder.
   *    Once initial set up is completed, the project can run by clicking on the jar file or run the command 
   java -jar weather_simulator-0.0.1-SNAPSHOT-jar-with-dependencies.jar in command prompt.
+3- The logs can be seen in the logs folder.
